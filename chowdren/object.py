@@ -3,7 +3,7 @@
 
 import os
 import glob
-import imp
+import importlib.util
 from chowdren.data import ObjectType
 
 OBJECTS_DIRECTORY = os.path.join(os.getcwd(), 'objects')
@@ -19,8 +19,9 @@ def get_objects():
             if not os.path.isdir(object_dir):
                 continue
             try:
-                module = imp.load_source(name, os.path.join(object_dir, 
-                    'edittime.py'))
+                spec = importlib.util.spec_from_file_location(name, os.path.join(object_dir, 'edittime.py'))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
                 object_type = module.get_object()
                 state.objects[object_type.__name__] = object_type
             except AttributeError:

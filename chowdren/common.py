@@ -5,6 +5,11 @@ import shutil
 import os
 import string
 
+try:
+    WindowsError
+except NameError:
+    WindowsError = OSError
+
 class StringWrapper(object):
     def __init__(self, value):
         self.value = value
@@ -48,20 +53,20 @@ def copy_tree(src, dst):
                 shutil.copy2(srcname, dstname)
         # catch the Error from the recursive copytree so that we can
         # continue with other files
-        except shutil.Error, err:
+        except shutil.Error as err:
             errors.extend(err.args[0])
-        except EnvironmentError, why:
+        except EnvironmentError as why:
             errors.append((srcname, dstname, str(why)))
     try:
         shutil.copystat(src, dst)
-    except OSError, why:
-        if WindowsError is not None and isinstance(why, WindowsError):
+    except OSError as why:
+        if isinstance(why, WindowsError):
             # Copying file access times may fail on Windows
             pass
         else:
             errors.extend((src, dst, str(why)))
     if errors:
-        raise shutil.Error, errors
+        raise shutil.Error(errors)
 
 def make_color(value):
     return 'Color(%s)' % ', '.join([str(item) for item in value])

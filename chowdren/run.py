@@ -5,12 +5,13 @@ import sys
 import math
 import os
 import json
-from PySide import QtCore, QtGui, QtOpenGL
-global_application = QtGui.QApplication(sys.argv)
-global_application.setStyle("cleanlooks")
-
-from PySide.QtCore import Qt
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import Qt
+from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from OpenGL import GL
+
+global_application = QtWidgets.QApplication(sys.argv)
+global_application.setStyle("cleanlooks")
 from chowdren.build import build
 from chowdren.project import ProjectManager
 from chowdren.object import get_objects
@@ -18,46 +19,46 @@ from chowdren.image import Image
 from chowdren.common import IDPool
 from chowdren import data as sourcedata
 
-class SceneTreeItem(QtGui.QTreeWidgetItem):
+class SceneTreeItem(QtWidgets.QTreeWidgetItem):
     def __init__(self, scene):
         super(SceneTreeItem, self).__init__([scene.name])
         self.scene = scene
 
-class Workspace(QtGui.QTreeWidget):
+class Workspace(QtWidgets.QTreeWidget):
     def __init__(self, parent):
         super(Workspace, self).__init__(parent)
         self.headerItem().setHidden(True)
         data = parent.data
-        self.application = QtGui.QTreeWidgetItem([data.name])
+        self.application = QtWidgets.QTreeWidgetItem([data.name])
         self.addTopLevelItem(self.application)
 
     def add_scene(self, scene):
         item = SceneTreeItem(scene)
         self.application.addChild(item)
 
-class InsertObjectItem(QtGui.QListWidgetItem):
+class InsertObjectItem(QtWidgets.QListWidgetItem):
     def __init__(self, object_class):
         super(InsertObjectItem, self).__init__(object_class.__name__)
         self.object_class = object_class
 
-class InsertDialog(QtGui.QDialog):
+class InsertDialog(QtWidgets.QDialog):
     def __init__(self):
         super(InsertDialog, self).__init__()
         self.setWindowTitle('Create new object')
-        h_layout = self.h_layout = QtGui.QHBoxLayout()
-        self.list_widget = QtGui.QListWidget()
+        h_layout = self.h_layout = QtWidgets.QHBoxLayout()
+        self.list_widget = QtWidgets.QListWidget()
         self.list_widget.itemDoubleClicked.connect(self.on_accept)
         h_layout.addWidget(self.list_widget)
         for item in get_objects().values():
             self.list_widget.addItem(InsertObjectItem(item))
-        button_layout = self.button_layout = QtGui.QVBoxLayout()
-        self.ok_button = QtGui.QPushButton('OK')
+        button_layout = self.button_layout = QtWidgets.QVBoxLayout()
+        self.ok_button = QtWidgets.QPushButton('OK')
         self.ok_button.clicked.connect(self.on_accept)
-        self.cancel_button = QtGui.QPushButton('Cancel')
+        self.cancel_button = QtWidgets.QPushButton('Cancel')
         self.cancel_button.clicked.connect(self.on_cancel)
         for item in (self.ok_button, self.cancel_button):
-            item.setSizePolicy(QtGui.QSizePolicy.Expanding, 
-                               QtGui.QSizePolicy.Expanding)
+            item.setSizePolicy(QtWidgets.QSizePolicy.Expanding, 
+                               QtWidgets.QSizePolicy.Expanding)
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
         h_layout.addLayout(button_layout)
@@ -70,12 +71,12 @@ class InsertDialog(QtGui.QDialog):
     def on_cancel(self):
         self.reject()
 
-class SceneObject(QtGui.QGraphicsItem):
+class SceneObject(QtWidgets.QGraphicsItem):
     def __init__(self, object_type, data):
         super(SceneObject, self).__init__()
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges, True)
         self.data = data
         self.setPos(data.x, data.y)
         self.object_type = object_type
@@ -84,7 +85,7 @@ class SceneObject(QtGui.QGraphicsItem):
         return QtCore.QRectF(*self.object_type.get_bounding_box())
 
     def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemScenePositionHasChanged:
+        if change == QtWidgets.QGraphicsItem.ItemScenePositionHasChanged:
             data = self.data
             data.x, data.y = int(value.x()), int(value.y())
         return super(SceneObject, self).itemChange(change, value)
@@ -117,7 +118,7 @@ class SceneObject(QtGui.QGraphicsItem):
         painter.setPen(QtGui.QPen(brush2, 2, j = Qt.MiterJoin))
         painter.drawRect(x, y, width, height)
 
-class Scene(QtGui.QGraphicsScene):
+class Scene(QtWidgets.QGraphicsScene):
     def __init__(self, main, data):
         super(Scene, self).__init__()
         self.main = main
@@ -136,7 +137,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def on_insert(self):
         dialog = InsertDialog()
-        if dialog.exec_() != QtGui.QDialog.Accepted:
+        if dialog.exec_() != QtWidgets.QDialog.Accepted:
             return
         object_type = self.project.create_object_type(dialog.selected_object)
         self.create_instance(object_type, 0, 0)
@@ -160,29 +161,29 @@ class Scene(QtGui.QGraphicsScene):
                          QtGui.QColor(*data.background))
 
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu()
+        menu = QtWidgets.QMenu()
         menu.addAction(self.insert_action)
         menu.exec_(event.screenPos())
 
 ITEM_HEIGHT = 40
 
 def make_widget(layout):
-    widget = QtGui.QWidget()
+    widget = QtWidgets.QWidget()
     widget.setLayout(layout)
     return widget
 
 def make_horizontal_layout(*widgets):
-    layout = QtGui.QHBoxLayout()
+    layout = QtWidgets.QHBoxLayout()
     # layout.setAlignment(Qt.AlignTop)
     for item in widgets:
         layout.addWidget(item, alignment = Qt.AlignTop)
     return layout
 
-class ConditionDialog(QtGui.QDialog):
+class ConditionDialog(QtWidgets.QDialog):
     def __init__(self):
         super(ConditionDialog, self).__init__()
 
-class EventFrame(QtGui.QFrame):
+class EventFrame(QtWidgets.QFrame):
     def __init__(self):
         super(EventFrame, self).__init__()
 
@@ -203,17 +204,17 @@ class EventGroup(object):
         self.main = main
         self.data = data
 
-        layout = self.layout = QtGui.QHBoxLayout()
+        layout = self.layout = QtWidgets.QHBoxLayout()
 
-        self.conditions = QtGui.QVBoxLayout()
-        self.actions = QtGui.QVBoxLayout()
+        self.conditions = QtWidgets.QVBoxLayout()
+        self.actions = QtWidgets.QVBoxLayout()
 
-        self.conditions.addWidget(QtGui.QPushButton('Add condition'))
-        self.actions.addWidget(QtGui.QPushButton('Add action'))
+        self.conditions.addWidget(QtWidgets.QPushButton('Add condition'))
+        self.actions.addWidget(QtWidgets.QPushButton('Add action'))
 
-        tab_label = QtGui.QLabel('1')
-        tab_label.setSizePolicy(QtGui.QSizePolicy.Fixed, 
-                                QtGui.QSizePolicy.Fixed)
+        tab_label = QtWidgets.QLabel('1')
+        tab_label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, 
+                                QtWidgets.QSizePolicy.Fixed)
 
         layout.addWidget(tab_label)
         layout.addLayout(self.conditions)
@@ -222,19 +223,19 @@ class EventGroup(object):
         layout.setContentsMargins(margin, margin, margin, margin)
 
         self.widget = EventFrame()
-        self.widget.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Plain)
+        self.widget.setFrameStyle(QtWidgets.QFrame.StyledPanel | QtWidgets.QFrame.Plain)
         self.widget.setLayout(layout)
 
     def get_widget(self):
         return self.widget
 
 def make_framed_label(text):
-    label = QtGui.QLabel(text)
-    label.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Plain)
+    label = QtWidgets.QLabel(text)
+    label.setFrameStyle(QtWidgets.QFrame.StyledPanel | QtWidgets.QFrame.Plain)
     label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     return label
 
-class EventEditor(QtGui.QWidget):
+class EventEditor(QtWidgets.QWidget):
     def __init__(self, main, data):
         super(EventEditor, self).__init__()
         self.main = main
@@ -242,16 +243,16 @@ class EventEditor(QtGui.QWidget):
 
         self.groups = []
 
-        self.vertical_layout = QtGui.QVBoxLayout()
+        self.vertical_layout = QtWidgets.QVBoxLayout()
         margin = 2
         self.vertical_layout.setContentsMargins(margin, margin, margin, margin)
         self.vertical_layout.setAlignment(Qt.AlignTop)
 
-        self.add_button = QtGui.QPushButton('Add event')
+        self.add_button = QtWidgets.QPushButton('Add event')
         self.add_button.clicked.connect(self.on_add_event)
         self.add_widgets([self.add_button])
-        self.vertical_layout.insertSpacerItem(-1, QtGui.QSpacerItem(0, 0, 
-            vData = QtGui.QSizePolicy.MinimumExpanding))
+        self.vertical_layout.insertSpacerItem(-1, QtWidgets.QSpacerItem(0, 0, 
+            vData = QtWidgets.QSizePolicy.MinimumExpanding))
         self.setLayout(self.vertical_layout)
 
     def on_add_event(self):
@@ -276,7 +277,7 @@ class EventEditor(QtGui.QWidget):
         layout = make_horizontal_layout(*widgets)
         self.add_layout(layout, index)
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     build_timer = build_generator = None
     def __init__(self, app):
         super(MainWindow, self).__init__()
@@ -298,10 +299,10 @@ class MainWindow(QtGui.QMainWindow):
         scene_data = self.data.scenes[0]
         self.graphics_scene = Scene(self, scene_data)
         self.scenes = [self.graphics_scene]
-        self.graphics_view = QtGui.QGraphicsView(self.graphics_scene)
-        self.graphics_view.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
+        self.graphics_view = QtWidgets.QGraphicsView(self.graphics_scene)
+        self.graphics_view.setDragMode(QtWidgets.QGraphicsView.RubberBandDrag)
         self.event_editor = EventEditor(self, scene_data)
-        self.event_area = QtGui.QScrollArea()
+        self.event_area = QtWidgets.QScrollArea()
         self.event_area.setWidget(self.event_editor)
         self.event_area.setWidgetResizable(True)
 
@@ -309,12 +310,12 @@ class MainWindow(QtGui.QMainWindow):
         #     QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers))
         # self.graphics_view.setViewport(self.gl_widget)
         # self.graphics_view.setViewportUpdateMode(
-        #     QtGui.QGraphicsView.FullViewportUpdate)
+        #     QtWidgets.QGraphicsView.FullViewportUpdate)
 
         self.setCentralWidget(self.event_area)
 
         status_bar = self.statusBar()
-        self.status_label = QtGui.QLabel()
+        self.status_label = QtWidgets.QLabel()
         status_bar.addWidget(self.status_label)
         menu = self.menuBar()
         self.file = menu.addMenu('&File')
@@ -356,7 +357,7 @@ class MainWindow(QtGui.QMainWindow):
             self.project = ProjectManager(directory)
             self.data = self.project.data
         except IOError:
-            print 'could not load'
+            print('could not load')
             self.reset()
             return
 
@@ -387,7 +388,7 @@ class MainWindow(QtGui.QMainWindow):
         self.save()
 
     def save_as_selected(self):
-        ret = QtGui.QFileDialog.getExistingDirectory(self, 'Save As')
+        ret = QtWidgets.QFileDialog.getExistingDirectory(self, 'Save As')
         if not ret:
             return
         self.project.set_directory(ret)
@@ -410,20 +411,20 @@ class MainWindow(QtGui.QMainWindow):
 
     def update_build(self):
         try:
-            self.build_generator.next()
+            next(self.build_generator)
         except StopIteration:
             self.build_timer.stop()
             self.build_timer = self.build_generator = None
             self.set_status('Build finished.')
 
     def create_dock(self, widget_class, name, area):
-        dock = QtGui.QDockWidget(name, self)
+        dock = QtWidgets.QDockWidget(name, self)
         widget = widget_class(self)
         dock.setWidget(widget)
         self.addDockWidget(area, dock)
         return widget
 
-class GLWidget(QtOpenGL.QGLWidget):
+class GLWidget(QOpenGLWidget):
     def __init__(self, parent=None):
         super(GLWidget, self).__init__(parent)
 
@@ -441,7 +442,7 @@ class GLWidget(QtOpenGL.QGLWidget):
 
     def resizeGL(self, width, height):
         side = min(width, height)
-        GL.glViewport((width - side) / 2, (height - side) / 2, side, side)
+        GL.glViewport((width - side) // 2, (height - side) // 2, side, side)
 
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()

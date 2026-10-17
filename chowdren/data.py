@@ -87,7 +87,7 @@ class CodeData(BaseSerializer):
     def read(self, data):
         self.name = data.get('name', 'Application')
         self.object_types = {}
-        for k, v in data.get('object_types', {}).iteritems():
+        for k, v in data.get('object_types', {}).items():
             self.object_types[k] = ObjectType(v)
         self.scenes = []
         for item in data.get('scenes', []):
@@ -99,5 +99,5 @@ class CodeData(BaseSerializer):
         for scene in self.scenes:
             scenes.append(scene.get_dict())
         data['object_types'] = object_types = {}
-        for k, v in self.object_types.iteritems():
+        for k, v in self.object_types.items():
             object_types[k] = v.get_dict()

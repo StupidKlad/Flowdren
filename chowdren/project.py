@@ -27,7 +27,7 @@ class ProjectManager(object):
 
     def save(self):
         self.data.object_types = {}
-        for k, v in self.object_types.iteritems():
+        for k, v in self.object_types.items():
             self.data.object_types[k] = v.get_data()
         with open(self.get_application_file(), 'wb') as fp:
             self.data.save(fp)

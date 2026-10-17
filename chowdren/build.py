@@ -1,6 +1,7 @@
 import os
 import shutil
-from cStringIO import StringIO
+import textwrap
+from io import StringIO
 from chowdren.common import to_c, repr_c, copy_tree, make_color, to_cap_words
 from chowdren.image import Image
 import subprocess
@@ -28,7 +29,7 @@ class CodeWriter(object):
         if filename is None:
             self.fp = StringIO()
         else:
-            self.fp = open(filename, 'wb+')
+            self.fp = open(filename, 'w+')
     
     def format_line(self, line):
         return self.get_spaces() + line
@@ -155,7 +156,7 @@ class Builder(object):
 
         includes = ['common.h']
         scene_classes = []
-        for i in xrange(len(data.scenes)):
+        for i in range(len(data.scenes)):
             includes.append('scene%s.h' % (i+1))
             scene_classes.append('Scene%s' % (i+1))
         config.put_includes(*includes)
@@ -179,7 +180,7 @@ class Builder(object):
         images.put_includes('common.h')
         images.start_guard('IMAGES_H')
 
-        for image_id, image in project.images.iteritems():
+        for image_id, image in project.images.items():
             image.save(self.get_filename('images', '%s.png' % image_id))
             image_name = get_image(image)
             images.put_line(to_c(
@@ -194,13 +195,13 @@ class Builder(object):
         self.object_type_names = {}
         objects = self.open_code('objects.h')
         objects.put_includes('common.h', 'images.h')
-        for type_id, object_type in project.object_types.iteritems():
+        for type_id, object_type in project.object_types.items():
             self.write_object_type(type_id, object_type, objects)
         objects.close()
 
         # object type implementations
         type_files = set()
-        for type_id, object_type in project.object_types.iteritems():
+        for type_id, object_type in project.object_types.items():
             type_files.add(object_type.get_runtime())
 
         type_includes = set()

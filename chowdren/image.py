@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 import os
-from PySide.QtGui import QPixmap
+from PySide6.QtGui import QPixmap
 
 class Image(object):
     id = None
@@ -22,5 +22,16 @@ class Image(object):
         img = self.pixmap
         return (-self.hotspot_x, -self.hotspot_y, img.width(), img.height())
 
-default_image = Image(
-    os.path.join(os.path.dirname(__file__), 'res', 'default.png'))
+_default_image = None
+
+
+class _DefaultImageProxy(object):
+    def __getattr__(self, name):
+        global _default_image
+        if _default_image is None:
+            _default_image = Image(
+                os.path.join(os.path.dirname(__file__), 'res', 'default.png'))
+        return getattr(_default_image, name)
+
+
+default_image = _DefaultImageProxy()

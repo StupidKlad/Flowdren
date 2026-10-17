@@ -3,7 +3,7 @@
 
 from chowdren.object import ObjectBase
 from chowdren.image import default_image
-from PySide.QtGui import QColor
+from PySide6.QtGui import QColor
 
 class Sprite(ObjectBase):
     def initialize(self):
